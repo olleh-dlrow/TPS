@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using StarterAssets;
 
-public class IKController : MonoBehaviour
+public class CharacterIKController : MonoBehaviour
 {
     [SerializeField] private StarterAssetsInputs _input;
     [SerializeField] private ThirdPersonController _TPController;
@@ -28,7 +28,6 @@ public class IKController : MonoBehaviour
             _animator.SetBoneLocalRotation(HumanBodyBones.Chest, targetRotation);
 
             LeftHandIK();
-
         }
     }
 

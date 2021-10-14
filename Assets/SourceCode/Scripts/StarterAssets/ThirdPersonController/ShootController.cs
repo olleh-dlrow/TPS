@@ -30,7 +30,7 @@ public class ShootController : MonoBehaviour
     private WeaponBag _weaponBag;
     private ThirdPersonController _TPController;
     private StarterAssetsInputs _starterAssetsInputs;
-    private IKController _characterIKController;
+    private CharacterIKController _characterIKController;
 
     [SerializeField, Required, AssetsOnly] private GameObject _energyExplosion;
 #endregion
@@ -39,7 +39,7 @@ public class ShootController : MonoBehaviour
         _starterAssetsInputs = GetComponent<StarterAssetsInputs>();
         _TPController = GetComponent<ThirdPersonController>();
         _weaponBag = GetComponentInChildren<WeaponBag>();
-        _characterIKController = GetComponentInChildren<IKController>();
+        _characterIKController = GetComponentInChildren<CharacterIKController>();
     }
 
     private void Start() {
