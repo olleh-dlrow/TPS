@@ -220,9 +220,9 @@ MonoBehaviour:
   excludeFarPixels: 1
   useRadialDistance: 0
   heightFog: 1
-  height: 0.73
-  heightDensity: 4.34
-  startDistance: 1.44
+  height: 1.2
+  heightDensity: 5.06
+  startDistance: 0
   fogShader: {fileID: 4800000, guid: 70d8568987ac0499f952b54c7c13e265, type: 3}
 --- !u!114 &1097168542
 MonoBehaviour:
@@ -238,5 +238,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   EffectMaterial: {fileID: 2100000, guid: a3a5edaef4383dc46a9c4bcc1bfddcbf, type: 2}
   ScanDistance: 0
-  ScanSpeed: 10
+  ScanSpeed: 20
+  MaxScanDistance: 80
   _input: {fileID: 0}

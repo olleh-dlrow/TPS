@@ -1,6 +1,7 @@
 using UnityEngine;
-using System.Collections;
+using System.Collections.Generic;
 using StarterAssets;
+using System.Linq;
 
 [ExecuteInEditMode]
 public class Scanner : MonoBehaviour
@@ -21,9 +22,11 @@ public class Scanner : MonoBehaviour
     /// 扫描移动速度
     /// </summary>
     public float ScanSpeed = 50f;
+	public float MaxScanDistance = 100f;
 
 	private Camera _camera;
     [SerializeField] private StarterAssetsInputs _input;
+	private List<TempEnemy> enemies;
 
 	bool _scanning;
 
@@ -37,7 +40,8 @@ public class Scanner : MonoBehaviour
 
 	void Start()
 	{
-
+		enemies = GameObject.FindObjectsOfType<TempEnemy>().ToList();
+		Debug.AssertFormat(enemies != null, "enemy is null!");
     }
 
 	void Update()
@@ -45,6 +49,23 @@ public class Scanner : MonoBehaviour
 		if (_scanning)
 		{
 			ScanDistance += Time.deltaTime * ScanSpeed;
+
+			// display enemies
+			foreach(var enemy in enemies)
+			{
+				if(enemy == null)
+					continue;
+				if(!enemy.scanned && Vector3.Distance(_scannerOrigin, enemy.transform.position) < ScanDistance)
+				{
+					enemy.Scanned();
+				}
+			}
+
+			if(ScanDistance > MaxScanDistance)
+			{
+				_scanning = false;
+				ScanDistance = 0f;
+			}
 		}
 
 
@@ -81,7 +102,8 @@ public class Scanner : MonoBehaviour
 	void OnEnable()
 	{
 		_camera = GetComponent<Camera>();
-		_camera.depthTextureMode = DepthTextureMode.Depth;
+		_camera.depthTextureMode |= DepthTextureMode.Depth;
+		_camera.depthTextureMode |= DepthTextureMode.DepthNormals;
 	}
 
 	[ImageEffectOpaque]

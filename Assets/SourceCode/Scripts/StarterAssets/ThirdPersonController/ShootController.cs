@@ -27,6 +27,7 @@ public class ShootController : MonoBehaviour
     [SerializeField] private CinemachineVirtualCamera _aimVirtualCamera;
     [SerializeField] private Animator _characterAnimatorController;
     [SerializeField, Required] private Transform _weaponHolder;
+    [SerializeField] private GameObject _crossHair;
     private WeaponBag _weaponBag;
     private ThirdPersonController _TPController;
     private StarterAssetsInputs _starterAssetsInputs;
@@ -65,11 +66,13 @@ public class ShootController : MonoBehaviour
     private void Update() {
         if(IsAiming())
         {
+            _crossHair.SetActive(true);
             EnterAimState();
             OnAimState();
         }
         else
         {
+            _crossHair.SetActive(false);
             ExitAimState();
         }
     }
@@ -108,18 +111,19 @@ public class ShootController : MonoBehaviour
     {
         MoveOnAimState();
 
-        Vector3 aimPoint = GetAimPoint();
+        RaycastHit aimHit = GetAimHit();
         bool inAimingAnimation = _characterAnimatorController.GetCurrentAnimatorStateInfo(0).shortNameHash == _animIDAiming;
         if(inAimingAnimation && _TPController.Grounded && PrepareShoot())
         {
-            Shoot(aimPoint);
+            
+            Shoot(aimHit);
             OnShootEnd();
         }
     }
 
     private void OnShootEnd() {_starterAssetsInputs.shoot = false;}
 
-    private Vector3 GetAimPoint()
+    private RaycastHit GetAimHit()
     {
         Vector3 aimPoint = Vector3.zero;
         Vector2 screenCenterPoint = new Vector2(Screen.width / 2, Screen.height / 2);
@@ -129,7 +133,7 @@ public class ShootController : MonoBehaviour
         {
             aimPoint = hit.point;
         }
-        return aimPoint;
+        return hit;
     }
 
     private void ExitAimState()
@@ -161,9 +165,16 @@ public class ShootController : MonoBehaviour
         return _starterAssetsInputs.shoot == true;
     }
 
-    private void Shoot(Vector3 aimPoint)
+    private void Shoot(RaycastHit hit)
     {
-        GameObject explosion = Instantiate(_energyExplosion, aimPoint, Quaternion.identity);
+        GameObject explosion = Instantiate(_energyExplosion, hit.point, Quaternion.identity);
+
+        // check target
+        if(hit.collider.TryGetComponent<TempEnemy>(out var enemy))
+        {
+            Destroy(hit.collider.gameObject);
+        }
+        
         StartCoroutine(PlayExplosion(explosion.GetComponent<ParticleSystem>()));
     }
 
