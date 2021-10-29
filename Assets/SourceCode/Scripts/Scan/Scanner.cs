@@ -55,7 +55,8 @@ public class Scanner : MonoBehaviour
 			{
 				if(enemy == null)
 					continue;
-				if(!enemy.scanned && Vector3.Distance(_scannerOrigin, enemy.transform.position) < ScanDistance)
+				// if(!enemy.scanned && Vector3.Distance(_scannerOrigin, enemy.transform.position) < ScanDistance)
+				if(Vector3.Distance(_scannerOrigin, enemy.transform.position) < ScanDistance)
 				{
 					enemy.Scanned();
 				}
