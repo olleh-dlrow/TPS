@@ -104,7 +104,7 @@ public class ShootController : MonoBehaviour
 
     private void SwitchMotionControlToAimMode()
     {
-        _TPController.Sensitivity = _aimSensitivity;
+        _TPController.Sensitivity = _aimSensitivity * _TPController.TimeScale;
     }
 
     private void OnAimState()
@@ -157,7 +157,7 @@ public class ShootController : MonoBehaviour
 
     private void ExitMotionControlFromAimMode()
     {
-        _TPController.Sensitivity = _normalSensitivity;
+        _TPController.Sensitivity = _normalSensitivity * _TPController.TimeScale;
     }
 
     private bool PrepareShoot()
@@ -173,6 +173,7 @@ public class ShootController : MonoBehaviour
         if(hit.collider.TryGetComponent<TempEnemy>(out var enemy))
         {
             Destroy(hit.collider.gameObject);
+            
         }
         
         StartCoroutine(PlayExplosion(explosion.GetComponent<ParticleSystem>()));

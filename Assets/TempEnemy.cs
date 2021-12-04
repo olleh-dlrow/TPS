@@ -36,6 +36,7 @@ public class TempEnemy : MonoBehaviour
     public float WarnRadius = 6f;
     [Header("侦察圈")]
     public float DeathRadius = 4f;
+    public float DeathTime = 3f;
     public Color CircleColor;
     [ReadOnly] public float timer = 0f;
     [ReadOnly] public bool scanned = false;
@@ -50,6 +51,7 @@ public class TempEnemy : MonoBehaviour
     bool isRayCast;
     // 是否在扇形视角范围内
     bool isInView;   
+    bool lose;
     SkinnedMeshRenderer _renderer;
 
     public Transform SpawnPoint;
@@ -127,53 +129,129 @@ public class TempEnemy : MonoBehaviour
 
         if(CurrentState == EnemyState.Patrol)
         {
-            // 计算当前人物和巡逻点的距离
-            var p = PatrolPoints[curPatrolIndex].position;
-            var p1 = new Vector3(transform.position.x, 0, transform.position.z);
-            var p2 = new Vector3(p.x, 0, p.z);
-
-            float dist = Vector3.Distance(p1, p2);
-            if(dist < 0.4f)
+            if(CheckFoundTarget())
             {
-                // 设置人物停止一段时间
-                if(!agent.isStopped)
+                OnTargetFound();
+            }
+            else
+            {
+                // 计算当前人物和巡逻点的距离
+                var p = PatrolPoints[curPatrolIndex].position;
+                var p1 = new Vector3(transform.position.x, 0, transform.position.z);
+                var p2 = new Vector3(p.x, 0, p.z);
+
+                float dist = Vector3.Distance(p1, p2);
+                if(dist < 0.4f)
                 {
-                    CurrentState = EnemyState.Idle;
+                    // 设置人物停止一段时间
+                    if(!agent.isStopped)
+                    {
+                        CurrentState = EnemyState.Idle;
 
-                    agent.isStopped = true;
-                    PatrolTimer = WaitTime;
-                    curPatrolIndex = (1 + curPatrolIndex) % PatrolPoints.Length;
-                    transform.LookAt(PatrolPoints[curPatrolIndex].position);
-                    agent.SetDestination(PatrolPoints[curPatrolIndex].position);
+                        agent.isStopped = true;
+                        PatrolTimer = WaitTime;
+                        curPatrolIndex = (1 + curPatrolIndex) % PatrolPoints.Length;
+                        transform.LookAt(PatrolPoints[curPatrolIndex].position);
+                        agent.SetDestination(PatrolPoints[curPatrolIndex].position);
+                    }
                 }
-
             }
         }
 
-        if(CurrentState == EnemyState.Idle && agent.isStopped && PatrolTimer <= 0f)
+        if(CurrentState == EnemyState.Idle)
         {
-            CurrentState = EnemyState.Patrol;
+            if(CheckFoundTarget())
+            {
+                OnTargetFound();
+            }
+            else if(agent.isStopped && PatrolTimer <= 0f)
+            {
+                CurrentState = EnemyState.Patrol;
 
-            agent.isStopped = false;
+                agent.isStopped = false;
+            }
         }
 
+        if(CurrentState == EnemyState.Attack)
+        {
+            if(CheckFoundTarget())
+            {
+                transform.LookAt(_characterTransform);
+
+            }
+            else
+            {
+                CurrentState = EnemyState.Patrol;
+                Time.timeScale = 1.0f;
+                agent.isStopped = false;
+                OnTargetLost();
+            }
+        }
+    }
+
+    private void OnDestroy() {
+        Time.timeScale = 1f;
+        OnTargetLost();
     }
 
     private void LateUpdate() {
+
+    }
+
+    // 检查是否发现了目标
+    private bool CheckFoundTarget()
+    {
         if(_characterTransform != null)
         {
             // 被发现
             float dist = Vector3.Distance(transform.position, _characterTransform.position);
             if(isInView && isRayCast && dist < DeathRadius)
+                return true;
+        }
+        return false;
+    }
+
+    private void OnTargetFound()
+    {
+        CurrentState = EnemyState.Attack;
+
+        agent.isStopped = true;
+        Time.timeScale = 0.5f;
+        if(_characterTransform.TryGetComponent<ThirdPersonController>(out var TPC))
+        {
+            TPC.TimeScale = 0.1f;
+            if(Camera.main.TryGetComponent<Scanner>(out var scanner))
             {
-                CurrentState = EnemyState.Attack;
+                scanner.IsBulletTime = true;
+                // StartCoroutine(DeathCountDown());
+            }
+        }
+    }
 
-                agent.isStopped = true;
-                transform.LookAt(_characterTransform);
+    // 玩家死亡倒计时
+    private IEnumerator DeathCountDown()
+    {
+        float deathTimer = DeathTime;
+        while(deathTimer > 0f)
+        {
+            deathTimer -= Time.unscaledDeltaTime;
+            yield return null;
+        }
+        LoseText.gameObject.SetActive(true);
+        lose = true;
+    }
 
-                LoseText.gameObject.SetActive(true);
-                // _characterTransform.position = SpawnPoint.position;
-            }  
+    // 目标丢失
+    private void OnTargetLost()
+    {
+        if(_characterTransform && _characterTransform.TryGetComponent<ThirdPersonController>(out var TPC))
+        {
+            TPC.TimeScale = 1f;
+            if(Camera.main && Camera.main.TryGetComponent<Scanner>(out var scanner))
+            {
+                scanner.IsBulletTime = false;
+                StopAllCoroutines();
+            }
         }
     }
 
@@ -336,9 +414,7 @@ public class TempEnemy : MonoBehaviour
     private void OnGUI() {
         if(CurrentState == EnemyState.Attack)
         {
-            GUILayout.Label("Attack");
-            GUILayout.Label("IsRaycast: " + isRayCast);
-            GUILayout.Label("IsInView: " + isInView);
+
         }
     }
 }

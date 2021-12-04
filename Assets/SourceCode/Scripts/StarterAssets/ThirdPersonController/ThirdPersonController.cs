@@ -22,6 +22,18 @@ namespace StarterAssets
 			set => _sensitivity = value;
 		}
 
+		public float RotationVelocity
+		{
+			get => _rotationVelocity;
+			set => _rotationVelocity = value;
+		}
+
+		public float TimeScale
+		{
+			get => _timeScale;
+			set => _timeScale = value;
+		}
+
 		public Vector3 DesiredLookAtTargetPosition { get => _desiredLookAtTargetPosition; }
 
 		public Quaternion DesiredCameraRotation { get => _desiredCameraRotation; }
@@ -75,6 +87,7 @@ namespace StarterAssets
 
 #region "Private Variables"
 		private float _sensitivity = 0.5f;
+		private float _timeScale = 1f;
 		// cinemachine
 		private float _cinemachineTargetYaw;
 		private float _cinemachineTargetPitch;
@@ -210,7 +223,8 @@ namespace StarterAssets
 			_cinemachineTargetYaw = ClampAngle(_cinemachineTargetYaw, float.MinValue, float.MaxValue);
 			_cinemachineTargetPitch = ClampAngle(_cinemachineTargetPitch, BottomClamp, TopClamp);
 
-			_desiredCameraRotation = Quaternion.Euler(_cinemachineTargetPitch + CameraAngleOverride, _cinemachineTargetYaw, 0.0f);
+			Vector3 desiredCameraAngle = new Vector3(_cinemachineTargetPitch + CameraAngleOverride, _cinemachineTargetYaw, 0.0f);
+			_desiredCameraRotation = Quaternion.Euler(desiredCameraAngle);
 
 			// set look at target position
 			var curCameraRotation = _mainCamera.transform.rotation;

@@ -14,6 +14,18 @@ public class Scanner : MonoBehaviour
     /// 扫描效果材质
     /// </summary>
 	public Material EffectMaterial;
+
+	/// <summary>
+	/// 子弹时间材质
+	/// </summary>
+	public Material BulletTimeMaterial;
+	/// <summary>
+	/// 子弹时间颜色
+	/// </summary>
+	public Color BTColor;
+	public float BTColorSpeed = 0.01f;
+	Color MidColor = new Color(1, 1, 1, 1);
+	public bool IsBulletTime = false;
     /// <summary>
     /// 当前扫描距离
     /// </summary>
@@ -27,6 +39,7 @@ public class Scanner : MonoBehaviour
 	private Camera _camera;
     [SerializeField] private StarterAssetsInputs _input;
 	private List<TempEnemy> enemies;
+	private ThirdPersonController TPController;
 
 	bool _scanning;
 
@@ -35,12 +48,18 @@ public class Scanner : MonoBehaviour
         if(EffectMaterial == null)
         {
             EffectMaterial = new Material(Shader.Find("ScannerEffect"));
-        }      
+        }
+		if(BulletTimeMaterial == null)
+		{
+			BulletTimeMaterial = new Material(Shader.Find("BulletTimeShader"));
+		}
     }
 
 	void Start()
 	{
 		enemies = GameObject.FindObjectsOfType<TempEnemy>().ToList();
+		TPController = GameObject.FindObjectOfType<ThirdPersonController>();
+		Debug.AssertFormat(TPController != null, "Player is null!");
 		Debug.AssertFormat(enemies != null, "enemy is null!");
     }
 
@@ -112,7 +131,25 @@ public class Scanner : MonoBehaviour
 	{
 		EffectMaterial.SetVector("_WorldSpaceScannerPos", _scannerOrigin);
 		EffectMaterial.SetFloat("_ScanDistance", ScanDistance);
+
+		Vector3 VMidColor = new Vector3(MidColor.r, MidColor.g, MidColor.b);
+		Vector3 VBTColor = new Vector3(BTColor.r, BTColor.g, BTColor.b);
+
+		if(IsBulletTime)
+		{
+			VMidColor = Vector3.MoveTowards(VMidColor, VBTColor, BTColorSpeed);
+		}
+		else
+		{
+			VMidColor = Vector3.MoveTowards(VMidColor, Vector3.one, BTColorSpeed);
+		}
+
+		MidColor = new Color(VMidColor.x, VMidColor.y, VMidColor.z, 1);
+		BulletTimeMaterial.SetColor("_BTColor", MidColor);
+
 		RaycastCornerBlit(src, dst, EffectMaterial);
+
+		Graphics.Blit(dst, dst, BulletTimeMaterial);
 	}
 
 	void RaycastCornerBlit(RenderTexture source, RenderTexture dest, Material mat)

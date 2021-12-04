@@ -1218,6 +1218,26 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 746541889}
     m_Modifications:
+    - target: {fileID: 1097168542, guid: dd4b778929c2c0240b4f9f5a848bd439, type: 3}
+      propertyPath: BTColor.b
+      value: 0.65955853
+      objectReference: {fileID: 0}
+    - target: {fileID: 1097168542, guid: dd4b778929c2c0240b4f9f5a848bd439, type: 3}
+      propertyPath: BTColor.g
+      value: 0.65955853
+      objectReference: {fileID: 0}
+    - target: {fileID: 1097168542, guid: dd4b778929c2c0240b4f9f5a848bd439, type: 3}
+      propertyPath: BTColor.r
+      value: 0.9150943
+      objectReference: {fileID: 0}
+    - target: {fileID: 1097168542, guid: dd4b778929c2c0240b4f9f5a848bd439, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1097168542, guid: dd4b778929c2c0240b4f9f5a848bd439, type: 3}
+      propertyPath: BulletTimeMaterial
+      value: 
+      objectReference: {fileID: 2100000, guid: cfef4638769acb04cbe14ba81a9cf6e8, type: 2}
     - target: {fileID: 1097168548, guid: dd4b778929c2c0240b4f9f5a848bd439, type: 3}
       propertyPath: m_Enabled
       value: 1
