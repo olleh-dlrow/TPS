@@ -5,8 +5,17 @@ using Sirenix.OdinInspector;
 using StarterAssets;
 using UnityEngine.AI;
 
+public enum EnemyState
+{
+    Attack,
+    Idle,
+    Patrol
+}
+
 public class TempEnemy : MonoBehaviour
 {
+    // 敌人当前状态
+    public EnemyState CurrentState;
     LoseWidget LoseText;
     // 到达巡逻点后的休息时间
     public float WaitTime = 3f;
@@ -30,6 +39,17 @@ public class TempEnemy : MonoBehaviour
     public Color CircleColor;
     [ReadOnly] public float timer = 0f;
     [ReadOnly] public bool scanned = false;
+    // 目标角度
+    float TargetAngle;
+    // 敌人视野范围
+    public float ViewAngle = 60f;
+
+    // 角度差，每帧更新
+    float AngleDiff;
+    //是否通过射线能看到
+    bool isRayCast;
+    // 是否在扇形视角范围内
+    bool isInView;   
     SkinnedMeshRenderer _renderer;
 
     public Transform SpawnPoint;
@@ -38,6 +58,9 @@ public class TempEnemy : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        // 初始化敌人状态
+        CurrentState = EnemyState.Patrol;
+        // 初始化文字引用
         LoseText = Resources.FindObjectsOfTypeAll<LoseWidget>()[0];
         _anim = GetComponent<Animator>();
         // 初始化角色生成点
@@ -77,17 +100,22 @@ public class TempEnemy : MonoBehaviour
         }
 
         if(PatrolPoints != null)
-            Patrol();
+            StateUpdate();
     }
 
-    private void Patrol()
+    // 更新敌人状态
+    private void StateUpdate()
     {
+        CalculateAngle();
+        JudgeView();
+
         // 计时器运行
         if(PatrolTimer > 0f)
         {
             PatrolTimer -= Time.deltaTime;
         }
 
+        // 更新敌人动画
         if(agent.velocity != Vector3.zero)
         {
             _anim.SetFloat("vertical", 1f, 0.2f, Time.deltaTime);
@@ -97,38 +125,54 @@ public class TempEnemy : MonoBehaviour
             _anim.SetFloat("vertical", 0f, 0.2f, Time.deltaTime);
         }
 
-        var p = PatrolPoints[curPatrolIndex].position;
-        var p1 = new Vector3(transform.position.x, 0, transform.position.z);
-        var p2 = new Vector3(p.x, 0, p.z);
-
-        float dist = Vector3.Distance(p1, p2);
-        if(dist < 0.4f)
+        if(CurrentState == EnemyState.Patrol)
         {
-            // 设置人物停止一段时间
-            if(!agent.isStopped)
+            // 计算当前人物和巡逻点的距离
+            var p = PatrolPoints[curPatrolIndex].position;
+            var p1 = new Vector3(transform.position.x, 0, transform.position.z);
+            var p2 = new Vector3(p.x, 0, p.z);
+
+            float dist = Vector3.Distance(p1, p2);
+            if(dist < 0.4f)
             {
-                agent.isStopped = true;
-                PatrolTimer = WaitTime;
-                curPatrolIndex = (1 + curPatrolIndex) % PatrolPoints.Length;
-                transform.LookAt(PatrolPoints[curPatrolIndex].position);
-                agent.SetDestination(PatrolPoints[curPatrolIndex].position);
-            }
+                // 设置人物停止一段时间
+                if(!agent.isStopped)
+                {
+                    CurrentState = EnemyState.Idle;
 
+                    agent.isStopped = true;
+                    PatrolTimer = WaitTime;
+                    curPatrolIndex = (1 + curPatrolIndex) % PatrolPoints.Length;
+                    transform.LookAt(PatrolPoints[curPatrolIndex].position);
+                    agent.SetDestination(PatrolPoints[curPatrolIndex].position);
+                }
+
+            }
         }
-        if(agent.isStopped && PatrolTimer <= 0f)
+
+        if(CurrentState == EnemyState.Idle && agent.isStopped && PatrolTimer <= 0f)
         {
+            CurrentState = EnemyState.Patrol;
+
             agent.isStopped = false;
         }
+
     }
 
     private void LateUpdate() {
         if(_characterTransform != null)
         {
             // 被发现
-            if(Vector3.Distance(transform.position, _characterTransform.position) < DeathRadius)
+            float dist = Vector3.Distance(transform.position, _characterTransform.position);
+            if(isInView && isRayCast && dist < DeathRadius)
             {
+                CurrentState = EnemyState.Attack;
+
+                agent.isStopped = true;
+                transform.LookAt(_characterTransform);
+
                 LoseText.gameObject.SetActive(true);
-                _characterTransform.position = SpawnPoint.position;
+                // _characterTransform.position = SpawnPoint.position;
             }  
         }
     }
@@ -154,6 +198,130 @@ public class TempEnemy : MonoBehaviour
         }
     }
 
+    // 计算玩家和敌人之间的视角差
+   void CalculateAngle()
+    {
+        if (_characterTransform != null)
+        {
+            float AtanAngle = (Mathf.Atan((_characterTransform.position.z - this.transform.position.z) /
+            (_characterTransform.position.x - this.transform.position.x))
+            * 180.0f / 3.14159f);
+            //Debug.Log (this.transform.rotation.eulerAngles+"   "+AtanAngle);
+ 
+            //1象限角度转换
+            if ((_characterTransform.position.z - this.transform.position.z) > 0
+               &&
+            (_characterTransform.position.x - this.transform.position.x) > 0
+               )
+            {
+                TargetAngle = 90f - AtanAngle;
+                //Debug.Log ("象限1 "+TargetAngle);
+            }
+ 
+            //2象限角度转换
+            if ((_characterTransform.position.z - this.transform.position.z) <= 0
+               &&
+            (_characterTransform.position.x - this.transform.position.x) > 0
+               )
+            {
+                TargetAngle = 90f + -AtanAngle;
+                //Debug.Log ("象限2 "+TargetAngle);
+            }
+ 
+            //3象限角度转换
+            if ((_characterTransform.position.z - this.transform.position.z) <= 0
+               &&
+            (_characterTransform.position.x - this.transform.position.x) <= 0
+               )
+            {
+                TargetAngle = 90f - AtanAngle + 180f;
+                //Debug.Log ("象限3 "+TargetAngle);
+            }
+ 
+            //4象限角度转换
+            if ((_characterTransform.position.z - this.transform.position.z) > 0
+               &&
+            (_characterTransform.position.x - this.transform.position.x) <= 0
+               )
+            {
+                TargetAngle = 270f + -AtanAngle;
+                //Debug.Log ("象限4 "+TargetAngle);
+            }
+ 
+ 
+            //调整TargetAngle
+            float OriginTargetAngle = TargetAngle;
+            if (Mathf.Abs(TargetAngle + 360 - this.transform.rotation.eulerAngles.y)
+               <
+            Mathf.Abs(TargetAngle - this.transform.rotation.eulerAngles.y)
+               )
+            {
+                TargetAngle += 360f;
+            }
+            if (Mathf.Abs(TargetAngle - 360 - this.transform.rotation.eulerAngles.y)
+               <
+            Mathf.Abs(TargetAngle - this.transform.rotation.eulerAngles.y)
+               )
+            {
+                TargetAngle -= 360f;
+            }
+ 
+            //输出角度差
+            AngleDiff = Mathf.Abs(TargetAngle - this.transform.rotation.eulerAngles.y);
+            // Debug.Log("角度差:" + TargetAngle + "(" + OriginTargetAngle + ")-" + this.transform.rotation.eulerAngles.y + "=" + AngleDiff);
+        }
+    }
+
+    // 感知视野的相关计算 判断isRayCast和isInView
+    void JudgeView()
+    {
+ 
+        //感知角度相关计算
+        if (_characterTransform != null)
+        {
+            //指向玩家的向量计算
+            Vector3 vec = new Vector3(_characterTransform.position.x - this.transform.position.x,
+                                    0f,
+                                    _characterTransform.position.z - this.transform.position.z);
+ 
+            //射线碰撞判断
+            RaycastHit hitInfo;
+            if (Physics.Raycast(this.transform.position + Vector3.up, vec, out
+                               hitInfo, 20))
+            {
+                GameObject gameObj = hitInfo.collider.gameObject;
+                //Debug.Log("Object name is " + gameObj.name);
+                if (gameObj.TryGetComponent<ThirdPersonController>(out var TPC))//当射线碰撞目标为boot类型的物品 ，执行拾取操作
+                {
+                    // Debug.Log("Seen!");
+                    isRayCast = true;
+                }
+                else
+                {
+                    isRayCast = false;
+                }
+            }
+ 
+            //画出碰撞线
+            Debug.DrawLine(this.transform.position, hitInfo.point, Color.red, 1);
+            //视野中的射线碰撞判断结束
+ 
+            //视野范围判断
+            //物体在范围角度内,警戒模式下范围为原来1.5倍
+            if (AngleDiff * 2 < ViewAngle
+               )
+            {
+                // Debug.Log("InView!");
+                isInView = true;
+            }
+            else
+            {
+                isInView = false;
+            }
+            //Debug.Log ("角度差 "+AngleDiff);
+        }
+    }
+
     private void OnDrawGizmos() {
         //Gizmos.color = CircleColor;
         //if(scanned)
@@ -166,5 +334,11 @@ public class TempEnemy : MonoBehaviour
     }
 
     private void OnGUI() {
+        if(CurrentState == EnemyState.Attack)
+        {
+            GUILayout.Label("Attack");
+            GUILayout.Label("IsRaycast: " + isRayCast);
+            GUILayout.Label("IsInView: " + isInView);
+        }
     }
 }
