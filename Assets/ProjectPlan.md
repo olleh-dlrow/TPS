@@ -23,3 +23,20 @@ eg:
 ## 场景
 
 TestEnvTemplate: 测试环境的模板，包含已经搭建好的测试场景
+
+## 玩家/角色
+
+WeaponHolder, Spine
+
+依赖关系与必要属性：
+
+PlayerRoot <- ModelPrefab(venti)
+
+ModelPrefab: WeaponHolder, Spine
+
+ModelPrefab <- Model
+
+
+
+组件：
+
