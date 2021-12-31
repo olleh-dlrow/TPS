@@ -1,4 +1,10 @@
-﻿using UnityEngine;
+﻿/**
+	第三人称角色控制器
+	控制人物在正常和瞄准状态下的移动，旋转，相机控制
+	必要功能，不可拆分
+*/
+
+using UnityEngine;
 using Sirenix.OdinInspector;
 #if ENABLE_INPUT_SYSTEM && STARTER_ASSETS_PACKAGES_CHECKED
 using UnityEngine.InputSystem;
@@ -16,6 +22,10 @@ namespace StarterAssets
 	public class ThirdPersonController : MonoBehaviour
 	{
 #region "Public Variables"
+		/// <summary>
+		/// 控制鼠标旋转的灵敏度
+		/// </summary>
+		/// <value></value>
 		public float Sensitivity 
 		{
 			get => _sensitivity;
@@ -32,6 +42,15 @@ namespace StarterAssets
 		{
 			get => _timeScale;
 			set => _timeScale = value;
+		}
+
+		/// <summary>
+		/// 虚拟摄像机跟随的目标
+		/// </summary>
+		/// <value></value>
+		public Transform VCameraFollowTarget
+		{
+			get => _lookAtTarget;
 		}
 
 		public Vector3 DesiredLookAtTargetPosition { get => _desiredLookAtTargetPosition; }
@@ -113,41 +132,42 @@ namespace StarterAssets
 		private int _animIDMotionSpeed;
 
 		private Animator _animator;
-		private CharacterController _controller;
+		private CharacterController _characterController;
 		private StarterAssetsInputs _input;
 		private GameObject _mainCamera;
 		private ShootController _shootController;
 		private const float _threshold = 0.01f;
 
 		private bool _hasAnimator;
-		private WeaponIK _weaponIK;
-		[SerializeField] private Transform _lookAtTarget;
-		[SerializeField] private Transform _bone;
+
+		/// <summary>
+		/// 虚拟摄像机跟随的目标
+		/// </summary>
+		private Transform _lookAtTarget;
 		private Vector3 _desiredLookAtTargetPosition;
 
 #endregion
-
 		private void Awake()
 		{
-			// get a reference to our main camera
-			if (_mainCamera == null)
-			{
-				_mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
-			}
-			_shootController = GetComponent<ShootController>();
-		}
+			Debug.Assert(_animator = GetComponentInChildren<Animator>()				);
+			Debug.Assert(_characterController = GetComponent<CharacterController>()	);
+			Debug.Assert(_input = GetComponent<StarterAssetsInputs>()				);
+			Debug.Assert(_lookAtTarget = GameObject.Find("PlayerCameraRoot").transform	);
 
-		private void UpdateAnimatorState()
-		{
-			_hasAnimator = _animator != null;
+			if(!(_shootController = GetComponent<ShootController>()))
+			{
+				Debug.LogWarning("ShootController Closed");
+			}
+			
 		}
 
 		private void Start()
 		{
+			// 必须等待相机被生成后才能获取引用
+			// get a reference to our main camera
+			Debug.Assert(_mainCamera = GameObject.FindGameObjectWithTag("MainCamera"));
+
 			UpdateAnimatorState();
-			_animator = GetComponentInChildren<Animator>();
-			_controller = GetComponent<CharacterController>();
-			_input = GetComponent<StarterAssetsInputs>();
 
 			AssignAnimationIDs();
 
@@ -155,8 +175,6 @@ namespace StarterAssets
 			_jumpTimeoutDelta = JumpTimeout;
 			_fallTimeoutDelta = FallTimeout;
 		}
-
-		public bool trans;
 
 		private void Update()
 		{
@@ -173,10 +191,9 @@ namespace StarterAssets
 		{
 			CameraRotation();
 		}
-
-		public void SetWeaponIK(WeaponIK ik)
+		private void UpdateAnimatorState()
 		{
-			_weaponIK = ik;
+			_hasAnimator = _animator != null;
 		}
 
 		private void AssignAnimationIDs()
@@ -237,19 +254,9 @@ namespace StarterAssets
 			// if(_input.aim) LookAt(1f);
 		}
 
-		public void LookAt(float weight)
-		{
-			float y = _input.look.y * 0.1f;
-			y = Mathf.Clamp(y, -75f, 75f);
-			y = Mathf.Lerp(0f, y, weight);
-			
-			Debug.Log(y);
-			_bone.Rotate(y, 0f, 0f);
-		}
-
 		private void Move()
 		{
-			MoveSpeed = _input.aim ? _shootController.AimMoveSpeed : NormalMoveSpeed;
+			MoveSpeed = _shootController && _input.aim ? _shootController.AimMoveSpeed : NormalMoveSpeed;
 			// set target speed based on move speed, sprint speed and if sprint is pressed
 			float targetSpeed = !_input.aim && _input.sprint ? SprintSpeed : MoveSpeed;
 
@@ -260,7 +267,7 @@ namespace StarterAssets
 			if (_input.move == Vector2.zero) targetSpeed = 0.0f;
 
 			// a reference to the players current horizontal velocity
-			float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
+			float currentHorizontalSpeed = new Vector3(_characterController.velocity.x, 0.0f, _characterController.velocity.z).magnitude;
 
 			float speedOffset = 0.1f;
 			float inputMagnitude = _input.analogMovement ? _input.move.magnitude : 1f;
@@ -314,7 +321,7 @@ namespace StarterAssets
 			Vector3 targetDirection = Quaternion.Euler(0.0f, _targetRotation, 0.0f) * Vector3.forward;
 
 			// move the player
-			_controller.Move(targetDirection.normalized * (_speed * Time.deltaTime) + new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
+			_characterController.Move(targetDirection.normalized * (_speed * Time.deltaTime) + new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
 
 			// transform.Translate(targetDirection.normalized * (_speed * Time.deltaTime) + new Vector3(0.0f, _verticalVelocity, 0.0f) * Time.deltaTime);
 

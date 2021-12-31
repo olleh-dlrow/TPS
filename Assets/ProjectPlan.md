@@ -26,7 +26,9 @@ TestEnvTemplate: 测试环境的模板，包含已经搭建好的测试场景
 
 ## 玩家/角色
 
-WeaponHolder, Spine
+PlayerSpawner：负责生成玩家和相机
+
+
 
 依赖关系与必要属性：
 
@@ -39,4 +41,28 @@ ModelPrefab <- Model
 
 
 组件：
+
+ThirdPersonController：必要
+
+<- Camera
+
+---
+
+ShooterController：非必要，提供射击功能
+
+<- ThirdPersonController
+
+<- AimCamera
+
+可选：
+
+CrossHair
+
+---
+
+CharacterIKController：非必要，控制角色IK
+
+<- ShooterController
+
+
 
