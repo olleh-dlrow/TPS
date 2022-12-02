@@ -1,4 +1,4 @@
-Shader "Custom/BulletTimeShader"
+Shader "BulletTimeShader"
 {
     Properties
     {

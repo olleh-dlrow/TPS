@@ -44,6 +44,12 @@ namespace StarterAssets
 			set => _timeScale = value;
 		}
 
+		public bool IsInBulletTime
+		{
+			get => _isInBulletTime;
+			set => _isInBulletTime = value;
+		}
+
 		/// <summary>
 		/// 虚拟摄像机跟随的目标
 		/// </summary>
@@ -145,6 +151,9 @@ namespace StarterAssets
 		/// </summary>
 		private Transform _lookAtTarget;
 		private Vector3 _desiredLookAtTargetPosition;
+
+		// 子弹时间
+		private bool _isInBulletTime;
 
 #endregion
 		private void Awake()

@@ -1,3 +1,8 @@
+/**
+	扫描仪
+	产生扫描效果和边缘检测效果
+*/
+
 Shader "ScannerEffect"
 {
 	Properties
@@ -12,6 +17,7 @@ Shader "ScannerEffect"
 		_TrailColor("Trail Color", Color) = (1, 1, 1, 0)
 		_HBarColor("Horizontal Bar Color", Color) = (0.5, 0.5, 0.5, 0)
 		// edge
+		
 		_EdgeOnly ("Edge Only", Float) = 1.0
 		[HDR]_EdgeColor ("Edge Color", Color) = (0, 0, 0, 1)
 		_BackgroundColor ("Background Color", Color) = (1, 1, 1, 1)
@@ -173,12 +179,12 @@ Shader "ScannerEffect"
 					edge *= CheckSame(sample1, sample2);
 					edge *= CheckSame(sample3, sample4);
 					
-					half percent = dist / _ScanDistance;
-					edge = lerp(1, edge, percent);
-					if (edge > 0.95f)
-					{
-						edge = 1;
-					}
+					// half percent = dist / _ScanDistance;
+					// edge = lerp(1, edge, percent);
+					// if (edge > 0.95f)
+					// {
+					// 	edge = 1;
+					// }
 					// fixed4 withEdgeColor = lerp(_EdgeColor, tex2D(_MainTex, i.uv[0]), edge);
 					// fixed4 onlyEdgeColor = lerp(_EdgeColor, _BackgroundColor, edge);
 				}

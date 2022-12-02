@@ -15,8 +15,8 @@ TagManager:
   - Ground
   - Layer1
   - Explosion
-  - 
-  - 
+  - ScannableObject
+  - Player
   - 
   - 
   - 

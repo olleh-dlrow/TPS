@@ -24,6 +24,15 @@ namespace StarterAssets
 		public bool cursorInputForLook = true;
 #endif
 
+		// 响应信号，为1屏蔽，为0打开
+		private uint response = 0;
+		const uint REP_MOVE = 0x1;
+		const uint REP_LOOK = 0x2;
+		const uint REP_JUMP = 0x4;
+		const uint REP_SPRINT = 0x8;
+		const uint REP_AIM = 0x10;
+		const uint REP_SHOOT = 0x20;
+
 #if ENABLE_INPUT_SYSTEM && STARTER_ASSETS_PACKAGES_CHECKED
 		public void OnMove(InputValue value)
 		{
@@ -64,32 +73,50 @@ namespace StarterAssets
 
 		public void MoveInput(Vector2 newMoveDirection)
 		{
-			move = newMoveDirection;
+			if((response & REP_MOVE) == 0)
+				move = newMoveDirection;
+			else
+				move = Vector2.zero;
 		} 
 
 		public void LookInput(Vector2 newLookDirection)
 		{
-			look = newLookDirection;
+			if((response & REP_LOOK) == 0)
+				look = newLookDirection;
+			else
+				look = Vector2.zero;
 		}
 
 		public void JumpInput(bool newJumpState)
 		{
-			jump = newJumpState;
+			if((response & REP_JUMP) == 0)
+				jump = newJumpState;
+			else
+				jump = false;
 		}
 
 		public void SprintInput(bool newSprintState)
 		{
-			sprint = newSprintState;
+			if((response & REP_SPRINT) == 0)
+				sprint = newSprintState;
+			else
+				sprint = false;
 		}
 
 		public void AimInput(bool newAimState)
 		{
-			aim = newAimState;
+			if((response & REP_AIM) == 0)
+				aim = newAimState;
+			else
+				aim = false;
 		}
 
 		public void ShootInput(bool newShootState)
 		{
-			shoot = newShootState;
+			if((response & REP_SHOOT) == 0)
+				shoot = newShootState;
+			else
+				shoot = false;
 		}
 
 #if !UNITY_IOS || !UNITY_ANDROID
@@ -106,6 +133,21 @@ namespace StarterAssets
 
 #endif
 
+		// 屏蔽/打开某个输入
+		public void ChangeInputResponse(string inputName, bool turnOn)
+		{
+			switch(inputName)
+			{
+				case "Move":
+					if(turnOn)
+						response &= ~REP_MOVE;
+					else
+						response |= REP_MOVE;
+				break;
+
+				default:
+				break;
+			}
+		}
 	}
-	
 }

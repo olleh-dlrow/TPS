@@ -54,7 +54,6 @@ public class TempEnemy : MonoBehaviour
     bool lose;
     SkinnedMeshRenderer _renderer;
 
-    public Transform SpawnPoint;
     [SerializeField] Transform _characterTransform;
     Animator _anim;
     // Start is called before the first frame update
@@ -65,8 +64,6 @@ public class TempEnemy : MonoBehaviour
         // 初始化文字引用
         LoseText = Resources.FindObjectsOfTypeAll<LoseWidget>()[0];
         _anim = GetComponent<Animator>();
-        // 初始化角色生成点
-        SpawnPoint = GameObject.FindObjectOfType<SpawnPoint>()?.transform;
         // 获取角色位置
         _characterTransform = GameObject.FindObjectOfType<ThirdPersonController>()?.transform;
 
@@ -222,7 +219,7 @@ public class TempEnemy : MonoBehaviour
             TPC.TimeScale = 0.1f;
             if(Camera.main.TryGetComponent<Scanner>(out var scanner))
             {
-                scanner.IsBulletTime = true;
+                TPC.IsInBulletTime = true;
                 // StartCoroutine(DeathCountDown());
             }
         }
@@ -249,7 +246,7 @@ public class TempEnemy : MonoBehaviour
             TPC.TimeScale = 1f;
             if(Camera.main && Camera.main.TryGetComponent<Scanner>(out var scanner))
             {
-                scanner.IsBulletTime = false;
+                TPC.IsInBulletTime = false;
                 StopAllCoroutines();
             }
         }

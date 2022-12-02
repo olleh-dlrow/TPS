@@ -11,7 +11,7 @@ Shader "Scanner/Occlusion"
     SubShader
     {
         Tags {
-            //"RenderType"="Opaque"  "Queue"="Geometry"
+            // "RenderType"="Opaque"  "Queue"="Geometry"
             "Queue"="Transparent" "IgnoreProjector"="True" "RenderType" = "Transparent" 
         }
         LOD 100

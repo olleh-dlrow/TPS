@@ -13,5 +13,4 @@ public class Spawner : MonoBehaviour
             Instantiate(prefab);
         }
     }
-    
 }

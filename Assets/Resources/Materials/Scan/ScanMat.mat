@@ -78,7 +78,7 @@ Material:
     - _Parallax: 0.02
     - _SampleDistance: 2
     - _ScanDistance: 0
-    - _ScanWidth: 15
+    - _ScanWidth: 50
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
     - _SrcBlend: 1
